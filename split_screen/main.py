@@ -136,13 +136,16 @@ if __name__ == "__main__":
     desktop_widget = QDesktopWidget()
     screens = desktop_widget.screenCount()
 
-    evaluator_window = EvaluatorWindow(pathlib.Path(args.input_word_file))
+    # Create windows
+    participant_window = ParticipantWindow()
+    evaluator_window = EvaluatorWindow(pathlib.Path(args.input_word_file), participant_window)
+
+    # Set the evaluator window to its screen
     evaluator_monitor = desktop_widget.screenGeometry(0)
     evaluator_window.move(evaluator_monitor.left(), evaluator_monitor.top())
     evaluator_window.showFullScreen()
 
-    # Participant
-    participant_window = ParticipantWindow()
+    # Set the participant window to its screen
     participant_monitor = desktop_widget.screenGeometry(1)
     participant_window.move(participant_monitor.left(), participant_monitor.top())
     participant_window.showFullScreen()

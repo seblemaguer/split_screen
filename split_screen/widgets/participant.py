@@ -30,7 +30,7 @@ class ParticipantWindow(QWidget):
         self.setLayout(self._layout)
 
 
-    def update_word(self, word):
+    def setWord(self, word):
         """Helper to update the word in the label
 
         parameters
