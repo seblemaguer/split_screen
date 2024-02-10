@@ -114,7 +114,7 @@ def define_argument_parser() -> argparse.ArgumentParser:
 
     # Add arguments
     parser.add_argument("input_word_file")
-    # parser.add_argument("output_result_file")
+    parser.add_argument("output_result_file")
 
     # Return parser
     return parser
@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     # Create windows
     participant_window = ParticipantWindow()
-    evaluator_window = EvaluatorWindow(pathlib.Path(args.input_word_file), participant_window)
+    evaluator_window = EvaluatorWindow(pathlib.Path(args.input_word_file), pathlib.Path(args.output_result_file), participant_window)
 
     # Set the evaluator window to its screen
     evaluator_monitor = desktop_widget.screenGeometry(0)
