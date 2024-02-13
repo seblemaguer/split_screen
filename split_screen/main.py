@@ -148,7 +148,9 @@ if __name__ == "__main__":
     # Set the participant window to its screen
     participant_monitor = desktop_widget.screenGeometry(1)
     participant_window.move(participant_monitor.left(), participant_monitor.top())
+    participant_window.setEvaluatorUI(evaluator_window)
     participant_window.showFullScreen()
+    participant_window.activateWindow()
 
     # Start the event loop.
     app.exec()

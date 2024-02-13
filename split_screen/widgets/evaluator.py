@@ -24,52 +24,78 @@ class EvaluatorWindow(QWidget):
     ):
         super().__init__()
 
+        # Initialise some helpers
         self._logger = logging.getLogger(self.__class__.__name__)
-
         self.setWindowTitle("Evaluator window")
+
+        # Define a wrapping widget to facilitate hide/show of the controls
+        self._wrapping_widget = QWidget()
+        wrapping_layout = QHBoxLayout()
+        wrapping_layout.addWidget(self._wrapping_widget)
+        self._wrapping_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self._wrapping_widget.hide()
+        self.setLayout(wrapping_layout)
 
         # Create a QHBoxLayout instance
         self._layout = QHBoxLayout()
 
-        # Add widgets to the layout
-        self._left_button = QPushButton("left")
-        font = self._left_button.font()
-        font.setPointSize(100)
-        self._left_button.setFont(font)
-        self._layout.addWidget(self._left_button, stretch=1)
-        self._left_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        self._left_button.clicked.connect(self.left_button_clicked)
+        # Defines possible answers
+        for label in ("too short", "short", "neutral", "long", "too long"):
+            # Create button
+            cur_button = QPushButton(label)
+            font = cur_button.font()
+            font.setPointSize(50)
+            cur_button.setFont(font)
 
-        self._right_button = QPushButton("right")
-        font = self._right_button.font()
-        font.setPointSize(100)
-        self._right_button.setFont(font)
-        self._layout.addWidget(self._right_button, stretch=1)
-        self._right_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        self._right_button.clicked.connect(self.right_button_clicked)
+            # Insert button to the layout
+            self._layout.addWidget(cur_button, stretch=1)
+            # self._left_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+
+            # Capture click
+            cur_button.clicked.connect(self.buttonClicked)
 
         # Set the layout on the application's window
-        self.setLayout(self._layout)
+        self._wrapping_widget.setLayout(self._layout)
 
         # Now prepare the data itself
         self._participant_window = participant_window
         self._current_index = -1
         self._word_df = pd.read_csv(word_list_file, sep="\t")
-        self.move_to_next()
         self._result_file_handle = open(result_file, "w")
-        self._result_file_handle.write("step_idx\ttimestamp\tselected_word\n")
+        self._result_file_handle.write("step_idx\tstart_scoring_timestamp\treceived_score_timestamp\tdictated_word\tjudgment\n")
 
-    def left_button_clicked(self):
-        self._logger.debug(f"Left button pressed ({self._right_button.text()})")
-        self._serialize_selection(self._left_button.text())
-        self.move_to_next()
+        # Ok ready, steady, go!
+        self.moveToNext()
 
-    def right_button_clicked(self):
-        self._logger.debug(f"Right button pressed ({self._right_button.text()})")
-        self._serialize_selection(self._right_button.text())
-        self.move_to_next()
+    def buttonClicked(self):
+        """Click event handler
 
-    def move_to_next(self):
+        Handler activated when the evaluator selected a judgement.
+        This triggers the following sequence of operations:
+           1. serialize the judgement with the different timestamps (start show of the scoring, click received)
+           2. move to the next step
+        """
+        # Log the time
+        current_time = datetime.datetime.now()
+
+        # Log the button clicked
+        sender = self.sender()
+        self._logger.debug(f"Left button pressed ({sender.text()}")
+        self._serializeSelection(current_time, self._word_df.loc[self._current_index, "Word"], sender.text())
+
+        # Move to the next step
+        self.moveToNext()
+
+    def moveToNext(self):
+        """Prepare the next step of the evaluation
+
+        This function triggers the following sequence:
+           1. hide anything from the evaluator to avoid any unwanted interactions
+           2. ensure that there is more evaluation to be done:
+              - if not just quit
+              - if yes select the next word and move the focus to the participant window
+        """
+        self._wrapping_widget.hide()
         self._current_index += 1
 
         # End of the test
@@ -79,15 +105,28 @@ class EvaluatorWindow(QWidget):
             import sys
             sys.exit(0)
 
-        # Move to the next step
-        self._left_button.setText(
-            self._word_df.loc[self._current_index, "Alternative 1"]
-        )
-        self._right_button.setText(
-            self._word_df.loc[self._current_index, "Alternative 2"]
-        )
         self._participant_window.setWord(self._word_df.loc[self._current_index, "Word"])
+        self._participant_window.activateWindow()
 
-    def _serialize_selection(self, word):
-        current_time = datetime.datetime.now()
-        self._result_file_handle.write(f"{self._current_index}\t{current_time}\t{word}\n")
+    def _serializeSelection(self, response_time, word, judgement):
+        """Wrapper to serialize the output of the current step
+
+        Parameters
+        ----------
+        response_time : datetime
+            the time for which the button was clicked on
+        word : str
+            the word displayed to the participant
+        judgement : str
+            the selected judgement
+        """
+        self._result_file_handle.write(f"{self._current_index}\t{self._start_timer}\t{response_time}\t{word}\t{judgement}\n")
+
+    def startCapture(self):
+        """Helper to prepare the judgement stage of the evaluation
+
+        This function is called by an external widget (the participant one)
+        """
+        self._logger.debug("Ready to capture")
+        self._wrapping_widget.show()
+        self._start_timer = datetime.datetime.now()
