@@ -5,7 +5,13 @@ import datetime
 
 # UI
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton, QSizePolicy, QStackedWidget
+from PyQt5.QtWidgets import (
+    QWidget,
+    QHBoxLayout,
+    QPushButton,
+    QSizePolicy,
+    QStackedWidget,
+)
 
 # Data
 import pandas as pd
@@ -52,7 +58,6 @@ class EvaluatorWindow(QWidget):
         self._wrapping_widget.addWidget(self._word_panel)
         self._wrapping_widget.addWidget(self._degree_panel)
 
-
         # Prepare the output data serialisation
         self._result_file_handle = open(result_file, "w")
         self._result_file_handle.write(
@@ -92,6 +97,10 @@ class EvaluatorWindow(QWidget):
                 self._word_df.loc[self._current_index, "Word"],
                 self._word_panel.selected_word,
                 self._degree_panel.selected_degree,
+            )
+            # Prepare the feedback to the participant
+            self._participant_window.setFeedback(
+                self._word_panel.selected_word, self._degree_panel.selected_degree
             )
 
         # Check if we are at the end or not
@@ -138,6 +147,8 @@ class WordPanel(QWidget):
     def __init__(self, window: EvaluatorWindow, w1: str, w2: str):
         super().__init__()
 
+        self.selected_word = ""
+
         self._window = window
 
         # Create alternative buttons
@@ -152,6 +163,7 @@ class WordPanel(QWidget):
         self._layout.addWidget(self._button_word1, stretch=1)
         self._layout.addWidget(self._button_word2, stretch=1)
         self.setLayout(self._layout)
+
 
     def updateWords(self, w1: str, w2: str):
         self._button_word1.setText(w1)
@@ -168,6 +180,8 @@ class DegreePanel(QWidget):
 
     def __init__(self, window: EvaluatorWindow):
         super().__init__()
+
+        self.selected_degree = ""
         self._window = window
 
         self._layout = QHBoxLayout()
