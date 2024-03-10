@@ -30,6 +30,8 @@ class EvaluatorWindow(QWidget):
         word_list_file: pathlib.Path,
         result_file: pathlib.Path,
         participant_window: QWidget,
+        n_decks: int = 10,
+        random_overall: bool = False,
     ):
         super().__init__()
 
@@ -38,9 +40,17 @@ class EvaluatorWindow(QWidget):
         self._logger = logging.getLogger(self.__class__.__name__)
         self.setWindowTitle("Evaluator window")
 
-        # Load words
+        # Load words ad prepare decks
         self._current_index = -1
         self._word_df = pd.read_csv(word_list_file, sep="\t")
+        self._word_df = pd.concat(
+            [self._word_df.sample(frac=1) for _ in range(n_decks)]
+        )
+
+        if random_overall:
+            self._word_df = self._word_df.sample(frac=1)
+        self._word_df = self._word_df.reset_index(drop=True)
+
 
         # Prepare the two panels (hidden for now)
         self._word_panel = WordPanel(self, "", "")  # FIXME: define the words
