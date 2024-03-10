@@ -10,7 +10,7 @@ class ParticipantWindow(QWidget):
     It only contains a word presented in fullscreen.
     """
 
-    FEEDBACK_DURATION = 2000  # ms
+    FEEDBACK_DURATION = 3000  # ms
 
     def __init__(self):
         """Initialisation
@@ -58,7 +58,7 @@ class ParticipantWindow(QWidget):
         self._wrapping_widget.setCurrentIndex(0)
 
         # Handle to the evaluator UI to be able to indicate end of reading
-        self._evaluator_ui = None
+        self._evaluator_window = None
 
     def showFeedback(self):
         self._wrapping_widget.setCurrentIndex(2)
@@ -70,18 +70,21 @@ class ParticipantWindow(QWidget):
     def moveOn(self):
         self._wrapping_widget.setCurrentIndex(0)
 
-    def setFeedback(self, word: str, degree: str):
-        text = "<div style='text-align: center;'>"
-        text += "The listener heard the word<br>"
-        text += f"\"<span style='color: #ff0000;'>{word}</span>\"<br>"
-        text += "and judged the pronunciation<br>"
-        text += f"\"<span style='color: #ff0000;'>{degree}</span>\"<br>"
-        text += "</div>"
+    def setFeedback(self, word: str):
+        if word == "":
+            text = "<div style='text-align: center;'>"
+            text += "The listener didn't understand<br> the word"
+            text += "</div>"
+        else:
+            text = "<div style='text-align: center;'>"
+            text += "The listener heard the word<br>"
+            text += f"\"<span style='font-weight:bold;'>{word}</span>\"<br>"
+            text += "</div>"
         self._feedback_label.setText(text)
 
         self.showFeedback()
 
-    def setEvaluatorUI(self, evaluator_ui: QWidget):
+    def setEvaluatorWindow(self, evaluator_window: QWidget):
         """Set the evaluator widget to be able to signal end of reading
 
         Parameters
@@ -89,7 +92,7 @@ class ParticipantWindow(QWidget):
         evaluator_ui : QWidget
             the evaluator widget
         """
-        self._evaluator_ui = evaluator_ui
+        self._evaluator_window = evaluator_window
 
     def setWord(self, word: str):
         """Helper to update the word in the label
@@ -108,8 +111,8 @@ class ParticipantWindow(QWidget):
 
         """
         self._wrapping_widget.setCurrentIndex(1)
-        self._evaluator_ui.activateWindow()
-        self._evaluator_ui.startCapture()
+        self._evaluator_window.activateWindow()
+        self._evaluator_window.startCapture()
 
     def keyPressEvent(self, event: QKeyEvent):
         """Keyboard event handler
@@ -127,3 +130,13 @@ class ParticipantWindow(QWidget):
                 self.endReading()
             else:
                 self._logger.info("Key pressed when not allowed!")
+
+        if event.key() == Qt.Key_F4 and event.modifiers() == Qt.AltModifier:
+            print("Alt+F4 pressed")
+
+    def closeEvent(self, event):
+        event.ignore()
+
+        self._evaluator_window.end_serialization()
+        import sys
+        sys.exit(0)
