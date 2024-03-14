@@ -11,6 +11,7 @@ class ParticipantWindow(QWidget):
     """
 
     FEEDBACK_DURATION = 3000  # ms
+    UNKNOWN_TAG = "Don't know"
 
     def __init__(self):
         """Initialisation
@@ -37,9 +38,9 @@ class ParticipantWindow(QWidget):
         self._wrapping_widget.addWidget(self._word_label)
 
         # Define and add the wait for feedback label
-        self._waiting_feedback_label = QLabel("Waiting for feedbacks....")
+        self._waiting_feedback_label = QLabel("")
         font = self._waiting_feedback_label.font()
-        font.setPointSize(80)
+        font.setPointSize(100)
         self._waiting_feedback_label.setFont(font)
         self._waiting_feedback_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self._waiting_feedback_label.setSizePolicy(
@@ -50,7 +51,7 @@ class ParticipantWindow(QWidget):
         # Define and add the wait for feedback label
         self._feedback_label = QLabel("")
         font = self._feedback_label.font()
-        font.setPointSize(80)
+        font.setPointSize(100)
         self._feedback_label.setFont(font)
         self._feedback_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self._feedback_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
@@ -70,16 +71,18 @@ class ParticipantWindow(QWidget):
     def moveOn(self):
         self._wrapping_widget.setCurrentIndex(0)
 
-    def setFeedback(self, word: str):
-        if word == "":
-            text = "<div style='text-align: center;'>"
-            text += "The listener didn't understand<br> the word"
-            text += "</div>"
+    def setFeedback(self, feedback_word: str):
+        stimulus_word = self._word_label.text()
+
+        text = "<div style='text-align: center;'>"
+        text += f"Stimulus word: <span style='font-weight:bold;'>{stimulus_word}</span><br>"
+        if feedback_word == stimulus_word:
+            text += f"Feedback word: <span style='font-weight:bold; color:green;'>{feedback_word}</span><br>"
+        elif feedback_word == ParticipantWindow.UNKNOWN_TAG:
+            text += f"Feedback word: <span style='font-weight:bold; color:red;'>{ParticipantWindow.UNKNOWN_TAG}</span><br>"
         else:
-            text = "<div style='text-align: center;'>"
-            text += "The listener heard the word<br>"
-            text += f"\"<span style='font-weight:bold;'>{word}</span>\"<br>"
-            text += "</div>"
+            text += f"Feedback word: <span style='font-weight:bold; color:red;'>{feedback_word}</span><br>"
+        text += "</div>"
         self._feedback_label.setText(text)
 
         self.showFeedback()
@@ -110,6 +113,8 @@ class ParticipantWindow(QWidget):
         This triggers the evaluator window to be ready for the capture
 
         """
+        text = f"<span style='font-weight:bold; color: gray;'>{self._word_label.text()}</span><br>"
+        self._waiting_feedback_label.setText(text)
         self._wrapping_widget.setCurrentIndex(1)
         self._evaluator_window.activateWindow()
         self._evaluator_window.startCapture()

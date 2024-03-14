@@ -18,6 +18,9 @@ from PyQt5.QtGui import QKeyEvent, QFont
 # Data
 import pandas as pd
 
+# Internal
+from .participant import ParticipantWindow
+
 
 class EvaluatorWindow(QWidget):
     """The window presented to the evaluator
@@ -170,7 +173,7 @@ class WordPanel(QWidget):
     def initUI(self, w1: str, w2: str):
         # Create alternative buttons
         self._button_word1 = QPushButton(w1)
-        self._button_unknown = QPushButton("<Unknown>")
+        self._button_unknown = QPushButton(ParticipantWindow.UNKNOWN_TAG)
         self._button_word2 = QPushButton(w2)
 
         # Set a fixed height
